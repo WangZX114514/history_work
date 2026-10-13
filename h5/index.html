@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#14171c">
+<title>重走长征路 · 互动体验</title>
+<style>
+  :root {
+    --bg: #14171c;
+    --cream: #f3ecdc;
+    --dim: #9aa0a8;
+    --card: #f7f1e4;
+    --ink: #23262c;
+    --red: #b23b3b;
+    --red-dark: #8e2c2c;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--cream);
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+    overflow: hidden;
+  }
+  #app { position: fixed; inset: 0; max-width: 560px; margin: 0 auto; }
+  .screen {
+    position: absolute; inset: 0;
+    display: none; flex-direction: column;
+    padding: calc(18px + env(safe-area-inset-top)) 18px calc(16px + env(safe-area-inset-bottom));
+  }
+  .screen.active { display: flex; animation: fade .35s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- 开始页 ---------- */
+  #screen-start { justify-content: center; align-items: center; text-align: center; overflow: hidden; }
+  .start-hero {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: 50% 42%; opacity: .55;
+  }
+  .start-veil {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg,
+      rgba(20, 23, 28, .62) 0%, rgba(20, 23, 28, .58) 34%,
+      rgba(20, 23, 28, .78) 62%, rgba(20, 23, 28, .96) 100%);
+  }
+  .start-inner {
+    position: relative; display: flex; flex-direction: column;
+    align-items: center; width: 100%;
+  }
+  .eyebrow { color: var(--dim); font-size: 13px; letter-spacing: 2px; margin: 0 0 18px; }
+  #screen-start h1 {
+    font-size: 40px; letter-spacing: 6px; margin: 0 0 10px; font-weight: 700;
+    color: var(--cream); text-shadow: 0 2px 18px rgba(178, 59, 59, .35);
+  }
+  .sub { color: #cfc7b4; font-size: 14.5px; line-height: 1.9; margin: 0 0 34px; max-width: 340px; }
+  .btn {
+    appearance: none; border: 0; cursor: pointer;
+    background: var(--red); color: #fff;
+    font-size: 17px; letter-spacing: 2px; font-weight: 600;
+    padding: 15px 46px; border-radius: 999px;
+    transition: transform .12s ease, background .2s ease;
+    touch-action: manipulation;
+  }
+  .btn:active { transform: scale(.96); background: var(--red-dark); }
+  .hint { color: var(--dim); font-size: 12px; margin-top: 22px; line-height: 1.8; }
+  .linkbtn {
+    appearance: none; border: 0; background: none; cursor: pointer;
+    color: var(--dim); font-family: inherit; font-size: 12.5px;
+    letter-spacing: 1px; margin-top: 14px; padding: 8px 10px;
+    text-decoration: underline; text-underline-offset: 4px;
+  }
+  .linkbtn:active { color: var(--cream); }
+
+  /* ---------- 创作说明 ---------- */
+  .about-body {
+    flex: 1; min-height: 0; overflow-y: auto;
+    color: #e6ddc9; font-size: 15px; line-height: 1.95;
+    padding: 4px 2px 12px;
+  }
+  .about-body p { margin: 0 0 12px; }
+  .about-body h3 {
+    font-size: 13px; color: var(--dim); font-weight: 600;
+    letter-spacing: 1px; margin: 18px 0 8px;
+  }
+  .about-body ul { margin: 0; padding-left: 18px; }
+  .about-body li { margin-bottom: 6px; }
+
+  /* ---------- 关卡页 ---------- */
+  .quiz-head {
+    display: flex; flex-direction: column; gap: 4px;
+    padding-bottom: 10px;
+  }
+  #quiz-step { color: var(--red); font-size: 13px; letter-spacing: 1px; }
+  #quiz-title { font-size: 20px; font-weight: 700; letter-spacing: 2px; }
+  .head-step { color: var(--red); font-size: 13px; letter-spacing: 1px; }
+  .head-title { font-size: 20px; font-weight: 700; letter-spacing: 2px; }
+  .quiz-body {
+    flex: 1; min-height: 0; overflow-y: auto;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .quiz-story {
+    color: #e6ddc9; font-size: 16px; line-height: 2.0;
+    padding: 6px 2px 14px;
+  }
+  .quiz-ask { color: var(--dim); font-size: 13px; margin-bottom: 10px; letter-spacing: 1px; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt {
+    display: flex; align-items: flex-start; gap: 12px;
+    background: var(--card); color: var(--ink);
+    border: 0; border-radius: 14px; cursor: pointer;
+    padding: 14px 16px; font-size: 15.5px; line-height: 1.55; text-align: left;
+    font-family: inherit;
+    transition: transform .12s ease, box-shadow .2s ease;
+    touch-action: manipulation;
+  }
+  .opt:active { transform: scale(.98); }
+  .opt .k { font-weight: 800; color: var(--red); flex: 0 0 auto; }
+
+  /* short screens: tighten the quiz so all three options stay on one screen */
+  @media (max-height: 660px) {
+    .quiz-story { font-size: 15px; line-height: 1.85; }
+    .opt { padding: 12px 14px; font-size: 15px; }
+    .options { gap: 8px; }
+    .quiz-ask { margin-bottom: 8px; }
+  }
+
+  /* ---------- 图片 + 配文 ---------- */
+  #screen-view { cursor: pointer; }
+  .view-inner {
+    flex: 1; min-height: 0; width: 100%; max-width: 430px; margin: 0 auto;
+    display: flex; flex-direction: column; justify-content: center; gap: 14px;
+  }
+  #view-img {
+    width: auto; max-width: 100%; max-height: 60vh;
+    margin: 0 auto; border-radius: 10px; display: block;
+    background: #0c0e11; box-shadow: 0 12px 34px rgba(0, 0, 0, .5);
+  }
+  .view-caption {
+    color: #efe7d3; font-size: 15px; line-height: 1.9;
+    max-height: 24vh; overflow-y: auto;
+  }
+  .view-hint { color: var(--dim); font-size: 12.5px; letter-spacing: 1px; }
+
+  /* ---------- 失败页 ---------- */
+  #screen-fail { justify-content: center; align-items: center; text-align: center; }
+  #screen-fail h2 {
+    color: var(--red); font-size: 34px; letter-spacing: 8px; margin: 0 0 18px;
+  }
+  #fail-title { color: var(--cream); font-size: 16px; line-height: 1.9; margin: 0 0 8px; }
+  .fail-note { color: var(--dim); font-size: 13px; margin: 0 0 30px; }
+
+  /* ---------- 胜利页 ---------- */
+  #screen-win { justify-content: center; align-items: center; text-align: center; }
+  #screen-win h2 {
+    color: #d9b36c; font-size: 30px; letter-spacing: 6px; margin: 0 0 20px;
+  }
+  #win-text { color: #e6ddc9; font-size: 15px; line-height: 2.1; margin: 0 0 34px; max-width: 360px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <section id="screen-start" class="screen active">
+    <img class="start-hero" id="start-hero" src="images/L01_A.jpg" alt="">
+    <div class="start-veil"></div>
+    <div class="start-inner">
+    <p class="eyebrow">纪念红军长征胜利 90 周年</p>
+    <h1>重走长征路</h1>
+    <p class="sub">从于都河畔到三军会师，12 个历史抉择。<br>每一步都曾真实发生——选错，征程即止。</p>
+    <button id="btn-start" class="btn">开始长征</button>
+    <p class="hint">配图由 AI 生成（豆包 · Seedream）<br>史实依据《中国共产党简史》等权威资料</p>
+    <button id="btn-about" class="linkbtn">创作说明 · 史料来源</button>
+    </div>
+  </section>
+
+  <section id="screen-quiz" class="screen">
+    <header class="quiz-head">
+      <span id="quiz-step"></span>
+      <span id="quiz-title"></span>
+    </header>
+    <div class="quiz-body">
+      <div class="quiz-story" id="quiz-story"></div>
+      <div class="quiz-ask">你将如何抉择？</div>
+      <div class="options" id="options"></div>
+    </div>
+  </section>
+
+  <section id="screen-view" class="screen">
+    <div class="view-inner">
+      <img id="view-img" alt="">
+      <div class="view-caption" id="view-caption"></div>
+      <div class="view-hint" id="view-hint"></div>
+    </div>
+  </section>
+
+  <section id="screen-fail" class="screen">
+    <h2>失败</h2>
+    <p id="fail-title"></p>
+    <p class="fail-note">历史没有如果——回到起点，再走一次。</p>
+    <button id="btn-retry" class="btn">回到起点</button>
+  </section>
+
+  <section id="screen-win" class="screen">
+    <h2>长征胜利结束</h2>
+    <p id="win-text"></p>
+    <button id="btn-again" class="btn">再走一次</button>
+  </section>
+
+  <section id="screen-about" class="screen">
+    <header class="quiz-head">
+      <span class="head-step">纪念红军长征胜利 90 周年</span>
+      <span class="head-title" id="about-title"></span>
+    </header>
+    <div class="about-body" id="about-body"></div>
+    <button id="btn-about-back" class="btn">返回</button>
+  </section>
+
+</div>
+
+<script>
+const LEVELS = [
+  {
+    "n": 1,
+    "title": "血战湘江后的转身",
+    "story": "1934年12月，湘江突围之后，队伍在湖南通道一带稍作喘息。原定计划是北上湘西与红二、六军团会合，但侦察显示湘西方向敌军已布下重兵口袋；贵州方向则兵力空虚。这支伤痕累累的队伍，下一步往哪里走？",
+    "options": [
+      {
+        "k": "A",
+        "t": "按原定计划北上湘西，与红二、六军团会合"
+      },
+      {
+        "k": "B",
+        "t": "就地休整，等敌情明朗后再作打算"
+      },
+      {
+        "k": "C",
+        "t": "采纳建议，转兵入黔，向敌人力量薄弱的贵州前进"
+      }
+    ],
+    "correct": "C",
+    "pass": "通道会议、黎平会议先后采纳转兵贵州的主张。红军掉头向西，钻进贵州的群山，把重兵布防的湘西甩在身后，向着遵义前进。",
+    "wrong": [
+      {
+        "letter": "A",
+        "ending": "钻进“口袋阵”",
+        "text": "队伍一头撞进湘西的重兵包围，损失惨重，被迫后撤。历史上，正是毛泽东力主放弃北上湘西的原计划、转兵贵州，红军才避免了这场灭顶之灾。"
+      },
+      {
+        "letter": "B",
+        "ending": "困在原地",
+        "text": "原地停留让敌军完成了合围，红军陷入被动。真实的长征没有给红军停留的时间——1934年12月，中央红军果断转兵贵州，赢得了主动。"
+      }
+    ]
+  },
+  {
+    "n": 2,
+    "title": "突破乌江天险",
+    "story": "1935年1月，乌江边。江宽水急，两岸是绝壁，敌人重兵把守北岸，身后追兵步步紧逼。乌江是通往遵义的必经之路。",
+    "options": [
+      {
+        "k": "A",
+        "t": "分头寻找上游浅滩，绕远路缓慢渡江"
+      },
+      {
+        "k": "B",
+        "t": "扎竹排、架浮桥，选多个渡口同时强渡"
+      },
+      {
+        "k": "C",
+        "t": "回师向东，另寻出路"
+      }
+    ],
+    "correct": "B",
+    "pass": "红军在江界河、回龙场、茶山关等渡口冒着枪林弹雨强渡乌江，突破天险；1月7日智取遵义城，为遵义会议赢得了宝贵环境。",
+    "wrong": [
+      {
+        "letter": "A",
+        "ending": "望江兴叹",
+        "text": "绕远路耽误了时间，追兵赶到，队伍在江边被咬住。真实历史中，红军靠竹排、门板扎成的渡具正面强渡，一举冲过天险。"
+      },
+      {
+        "letter": "C",
+        "ending": "自投罗网",
+        "text": "回师东进正好撞上追兵主力，损失惨重。突破乌江、进占遵义，才是当时唯一的生路。"
+      }
+    ]
+  },
+  {
+    "n": 3,
+    "title": "遵义会议",
+    "story": "1935年1月，遵义。中央政治局扩大会议正在召开，第五次反“围剿”和长征初期的失败历历在目。红军需要一次彻底的总结。",
+    "options": [
+      {
+        "k": "A",
+        "t": "总结失败教训，支持毛泽东同志的正确军事主张，改组中央领导"
+      },
+      {
+        "k": "B",
+        "t": "认为失败源于敌强我弱的客观条件，维持原有指挥"
+      },
+      {
+        "k": "C",
+        "t": "暂停大部队行动，化整为零、分散打游击"
+      }
+    ],
+    "correct": "A",
+    "pass": "遵义会议确立了以毛泽东同志为主要代表的马克思主义正确路线在党中央的领导地位，在最危急的关头挽救了党、挽救了红军、挽救了中国革命，成为党的历史上一个生死攸关的转折点。",
+    "wrong": [
+      {
+        "letter": "B",
+        "ending": "重蹈覆辙",
+        "text": "坚持原路线，只会带来新的失败。历史给出了答案：改变军事路线、确立正确领导，红军才走出了绝境。"
+      },
+      {
+        "letter": "C",
+        "ending": "一盘散沙",
+        "text": "在敌军重兵围追下分散行动，只会被各个击破。红军需要的是集中统一的领导，而不是散兵游勇。"
+      }
+    ]
+  },
+  {
+    "n": 4,
+    "title": "四渡赤水",
+    "story": "1935年春天，川黔滇边。一渡赤水进入川滇后，北渡长江的计划受阻：长江沿线敌军重兵密布，四面又都在合围上来。",
+    "options": [
+      {
+        "k": "A",
+        "t": "不惜代价强行北渡长江"
+      },
+      {
+        "k": "B",
+        "t": "避实击虚，回师东进，二渡赤水，再占遵义"
+      },
+      {
+        "k": "C",
+        "t": "就地转入防御，与追敌正面决战"
+      }
+    ],
+    "correct": "B",
+    "pass": "红军趁敌不备回师东进，取桐梓、夺娄山关、重占遵义，取得长征以来最大的一次胜利。此后三渡、四渡赤水，南渡乌江，兵临贵阳，把几十万敌军远远甩开。",
+    "wrong": [
+      {
+        "letter": "A",
+        "ending": "硬拼长江",
+        "text": "长江沿线重兵密布，强行渡江让队伍损失惨重、寸步难行。"
+      },
+      {
+        "letter": "C",
+        "ending": "正中下怀",
+        "text": "与优势敌军正面决战，正是对手求之不得的。运动战的要诀是：打得赢就打，打不赢就走。"
+      }
+    ]
+  },
+  {
+    "n": 5,
+    "title": "巧渡金沙江",
+    "story": "1935年5月，金沙江畔。红军先兵临昆明调出滇军，接着掉头北上。皎平渡是唯一能用的渡口，只有几只木船，追兵正昼夜兼程赶来。",
+    "options": [
+      {
+        "k": "A",
+        "t": "分兵多路，各自寻找渡口分头渡江"
+      },
+      {
+        "k": "B",
+        "t": "抢占皎平渡，靠现有木船集中昼夜摆渡"
+      },
+      {
+        "k": "C",
+        "t": "背水一战，先击退追兵再渡江"
+      }
+    ],
+    "correct": "B",
+    "pass": "红军抢占皎平渡，船工们昼夜不停划船，全军有序渡过金沙江，把追兵远远甩在江南岸。甩开追兵靠的是奇兵和纪律，而不是运气。",
+    "wrong": [
+      {
+        "letter": "A",
+        "ending": "分散受挫",
+        "text": "别的渡口水急船少，各路部队都被拖住。真实历史中，全军正是集中到皎平渡，靠几只木船渡过了金沙江。"
+      },
+      {
+        "letter": "C",
+        "ending": "背水陷险",
+        "text": "一旦被敌军合围，背水而战后果不堪设想。红军没有硬拼，而是用一场“巧渡”赢得了生机。"
+      }
+    ]
+  },
+  {
+    "n": 6,
+    "title": "强渡大渡河、飞夺泸定桥",
+    "story": "1935年5月，大渡河畔。安顺场仅有几只小船，船少水急，全军慢慢渡河需要一个多月，而追兵几天内就会赶到。蒋介石扬言要让红军成为“石达开第二”。",
+    "options": [
+      {
+        "k": "A",
+        "t": "依靠安顺场的小船，慢慢把全军渡过去"
+      },
+      {
+        "k": "B",
+        "t": "留在原地，等水势平缓、船只凑齐再渡"
+      },
+      {
+        "k": "C",
+        "t": "兵分两路，夹河急行军，夺下上游的泸定桥"
+      }
+    ],
+    "correct": "C",
+    "pass": "红四团一昼夜奔袭240里，22名勇士冒着弹雨攀着铁索冲过泸定桥，全军从桥上越过大渡河。天险被踩在脚下，“石达开第二”的预言落空。",
+    "wrong": [
+      {
+        "letter": "A",
+        "ending": "慢渡失机",
+        "text": "船少人多，渡河速度赶不上追兵逼近的速度。真实历史中，红军正是当机立断夺取泸定桥，才跳出了合围。"
+      },
+      {
+        "letter": "B",
+        "ending": "坐失良机",
+        "text": "等待的时间里，敌军完成了合围部署。机会只留给当机立断的人。"
+      }
+    ]
+  },
+  {
+    "n": 7,
+    "title": "翻越夹金山",
+    "story": "1935年6月，夹金山下。前方是海拔4000多米的雪山，终年积雪、空气稀薄，当地人叫它“神仙山”。翻过去，就能与红四方面军会师。",
+    "options": [
+      {
+        "k": "A",
+        "t": "清晨出发、轻装快行，拄木棍、手拉手，赶在午后变天前翻越"
+      },
+      {
+        "k": "B",
+        "t": "正午出发，借阳光取暖后一鼓作气翻山"
+      },
+      {
+        "k": "C",
+        "t": "在山下多休整几天，备足干粮再翻山"
+      }
+    ],
+    "correct": "A",
+    "pass": "红军清晨出发，喝辣椒水暖身、互相搀扶，赶在午后风雪前翻过夹金山，随后在懋功与红四方面军胜利会师。",
+    "wrong": [
+      {
+        "letter": "B",
+        "ending": "风雪之困",
+        "text": "午后山顶风雪骤起，队伍被困在雪山上。翻雪山要抢的是时间，是“赶早”的智慧。"
+      },
+      {
+        "letter": "C",
+        "ending": "驻足山下",
+        "text": "停留越久，敌人合围和给养耗尽的风险越大。翻过山去会师，才是眼前正确的路。"
+      }
+    ]
+  },
+  {
+    "n": 8,
+    "title": "北上还是南下",
+    "story": "1935年夏，两河口。一、四方面军会师后，下一步往哪里走？有人主张南下川康“另图发展”，党中央主张北上——到川陕甘创建根据地，到抗日前线去。",
+    "options": [
+      {
+        "k": "A",
+        "t": "南下川康，择地立足"
+      },
+      {
+        "k": "B",
+        "t": "就地停下，建立根据地"
+      },
+      {
+        "k": "C",
+        "t": "北上，到川陕甘去，到抗日前线去"
+      }
+    ],
+    "correct": "C",
+    "pass": "两河口会议确定北上方针。历史证明，北上为红军赢得了走向抗日前线的战略主动；红军继续北上，向着陕北进发。",
+    "wrong": [
+      {
+        "letter": "A",
+        "ending": "南下碰壁",
+        "text": "南下在川康一带遭遇重兵围攻，损失惨重，最终不得不回头北上。弯路走得越远，代价越大。"
+      },
+      {
+        "letter": "B",
+        "ending": "坐困川西",
+        "text": "川西北人烟稀少、给养艰难，停下就是消耗。红军选择了向北，走向更广阔的天地。"
+      }
+    ]
+  },
+  {
+    "n": 9,
+    "title": "穿越松潘草地",
+    "story": "1935年8月，松潘草地边缘。茫茫草地上遍布沼泽泥潭，一脚踩错就可能陷进去；粮食快吃完了，天气说变就变。",
+    "options": [
+      {
+        "k": "A",
+        "t": "抄近路直线穿越，尽快走出草地"
+      },
+      {
+        "k": "B",
+        "t": "按探明的路线集中行军，木棍探路、互相搀扶，节约干粮"
+      },
+      {
+        "k": "C",
+        "t": "在草地上休整几天，等天气好转再走"
+      }
+    ],
+    "correct": "B",
+    "pass": "红军走了七天七夜，靠野菜和皮带充饥，互相搀扶着走出草地，跳出了敌人的包围圈。",
+    "wrong": [
+      {
+        "letter": "A",
+        "ending": "泥沼之路",
+        "text": "看似笔直的近路下面尽是泥沼，队伍陷在里面进退两难。草地里没有捷径，只有探明的安全路线。"
+      },
+      {
+        "letter": "C",
+        "ending": "草地驻足",
+        "text": "草地天气难以预料，多停留一天，就多一分粮尽人亡的危险。走出草地，才是生机。"
+      }
+    ]
+  },
+  {
+    "n": 10,
+    "title": "激战腊子口",
+    "story": "1935年9月，甘肃腊子口。两侧绝壁夹峙，中间只有一条窄路，敌军重兵扼守。不打下腊子口，就到不了陕北。正面强攻一夜，没有奏效。",
+    "options": [
+      {
+        "k": "A",
+        "t": "正面继续强攻，不惜一切代价"
+      },
+      {
+        "k": "B",
+        "t": "放弃腊子口，绕道西行另寻出路"
+      },
+      {
+        "k": "C",
+        "t": "正面佯攻牵制，同时派小分队攀崖迂回，从侧后奇袭"
+      }
+    ],
+    "correct": "C",
+    "pass": "正面进攻不停，攀登小组从敌人头顶投下手榴弹。1935年9月，腊子口被攻克，红军打开了奔赴陕北的通道。",
+    "wrong": [
+      {
+        "letter": "A",
+        "ending": "强攻之殇",
+        "text": "隘口易守难攻，硬拼只会付出无谓的牺牲。获胜靠的不是蛮力，而是正面与奇兵的配合。"
+      },
+      {
+        "letter": "B",
+        "ending": "绕道之误",
+        "text": "绕行会误入人烟稀少、给养无着的地区，还把时间拱手让给敌人。腊子口必须打，也只能智取。"
+      }
+    ]
+  },
+  {
+    "n": 11,
+    "title": "吴起镇“切尾巴”",
+    "story": "1935年10月，陕北吴起镇。中央红军翻过六盘山，与陕北红军胜利会师；可身后，还有一股敌军骑兵一路尾追而来。",
+    "options": [
+      {
+        "k": "A",
+        "t": "集中兵力打掉尾追之敌，斩断“尾巴”"
+      },
+      {
+        "k": "B",
+        "t": "继续东进，甩开敌人，不与纠缠"
+      },
+      {
+        "k": "C",
+        "t": "掉头追击敌军主力，扩大战果"
+      }
+    ],
+    "correct": "A",
+    "pass": "红军集中兵力打掉尾追的骑兵，“切尾巴”战斗干净利落。1935年10月，中央红军历时一年、行程二万五千里的长征胜利结束。",
+    "wrong": [
+      {
+        "letter": "B",
+        "ending": "尾大不掉",
+        "text": "敌人的骑兵尾随进入根据地，威胁苏区安全。对尾追之敌，一次干脆的歼灭就是最好的告别。"
+      },
+      {
+        "letter": "C",
+        "ending": "孤军深入",
+        "text": "远征部队疲惫且兵力有限，追击敌主力是拿不足的力气做过头的事。红军打的是“尾巴”，不是“主力”。"
+      }
+    ]
+  },
+  {
+    "n": 12,
+    "title": "三大主力会师",
+    "story": "1936年10月，甘肃会宁。红二、红四方面军历尽艰险北上，与红一方面军即将会合；敌人调集重兵，企图阻挠三大主力会师。",
+    "options": [
+      {
+        "k": "A",
+        "t": "暂缓北上，就地休整，以避敌锋芒"
+      },
+      {
+        "k": "B",
+        "t": "坚决北上，突破阻拦，实现三大主力会师"
+      },
+      {
+        "k": "C",
+        "t": "分散行动，各自寻找安全地带过冬"
+      }
+    ],
+    "correct": "B",
+    "pass": "红军三大主力在会宁、静宁将台堡胜利会师，宣告红军长征胜利结束。90年后的今天，你站在会师的原点上，写下了自己的“新长征”心声。",
+    "wrong": [
+      {
+        "letter": "A",
+        "ending": "迟疑错过",
+        "text": "拖延让敌军从容部署，会师之路更加艰险。历史没有等待——1936年10月，三大主力如期会师。"
+      },
+      {
+        "letter": "C",
+        "ending": "各自为战",
+        "text": "分散行动难以形成合力，正中敌人下怀。会师的意义，正在于把力量拧成一股绳。"
+      }
+    ]
+  }
+];
+const ABOUT = {
+  "title": "创作说明",
+  "body": [
+    "这是一件“跨时空对话”式的数字创意作品。我把长征拆成 12 个真实发生过的历史抉择：血战湘江后转兵贵州，到遵义会议、四渡赤水、巧渡金沙江、飞夺泸定桥、翻雪山、过草地，直到三大主力会师。玩家以年轻红军战士的身份抉择——选对才能前进，选错便进入一个真实存在过的结局，回到起点重走。",
+    "最深的体会是：长征的伟大，正在于它在许多个“走错就结束”的关口被走对了。36 幅配图由 AI（豆包 · Seedream）生成，文案依据《中国共产党简史》等权威资料核校，不虚构、不戏说。作为在北京读书的大学生，我想用青年熟悉的交互语言，让 90 年前的那条路今天仍能被亲手“走”一遍。"
+  ],
+  "notesHeading": "附　史料与素材说明",
+  "notes": [
+    "作品名称：《重走长征路 · 互动体验》（H5 互动页面，数字创意作品）",
+    "史实依据：《中国共产党简史》、中共中央党史和文献研究院及长征沿线纪念场馆公开资料。",
+    "图片来源：AI 生成（豆包 · Seedream），经人工筛选、裁切与文案配对；非历史照片。",
+    "技术实现：单页 HTML5 + CSS3 + 原生 JavaScript，无外部依赖，可离线运行。"
+  ]
+};
+
+const VIEW_MS_CORRECT = 5200;
+const VIEW_MS_WRONG = 5200;
+const FAIL_MS = 3400;
+
+const $ = (s) => document.querySelector(s);
+let idx = 0;
+let busy = false;
+let timer = null;
+
+function show(id) {
+  clearTimeout(timer); timer = null;
+  document.querySelectorAll('.screen').forEach((el) => el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function imgPath(levelNo, key) {
+  return 'images/L' + String(levelNo).padStart(2, '0') + '_' + key + '.jpg';
+}
+
+function preloadAll() {
+  LEVELS.forEach((L) => {
+    ['A', 'B', 'C'].forEach((k) => { const im = new Image(); im.src = imgPath(L.n, k); });
+  });
+}
+
+function start() {
+  idx = 0; busy = false;
+  preloadAll();
+  renderLevel();
+  show('screen-quiz');
+}
+
+function renderLevel() {
+  const L = LEVELS[idx];
+  $('#quiz-step').textContent = '第 ' + L.n + ' 关 / 共 ' + LEVELS.length + ' 关';
+  $('#quiz-title').textContent = L.title;
+  $('#quiz-story').textContent = L.story;
+  $('#quiz-story').scrollTop = 0;
+  const wrap = $('#options');
+  wrap.innerHTML = '';
+  L.options.forEach((o) => {
+    const b = document.createElement('button');
+    b.className = 'opt';
+    b.dataset.k = o.k;
+    const kEl = document.createElement('span');
+    kEl.className = 'k'; kEl.textContent = o.k;
+    const tEl = document.createElement('span');
+    tEl.textContent = o.t;
+    b.appendChild(kEl); b.appendChild(tEl);
+    b.addEventListener('click', () => choose(o.k));
+    wrap.appendChild(b);
+  });
+}
+
+function choose(k) {
+  if (busy) return;
+  busy = true;
+  const L = LEVELS[idx];
+  const correct = k === L.correct;
+
+  const img = $('#view-img');
+  img.alt = L.title + ' · 选项' + k;
+  img.dataset.k = k;
+  img.onerror = () => {
+    $('#view-hint').textContent =
+      '配图未加载：请确认 images 文件夹与 index.html 在同一层级，且整个文件夹一起复制';
+  };
+  img.src = imgPath(L.n, k);
+
+  if (correct) {
+    $('#view-caption').textContent = L.pass;
+    $('#view-hint').textContent = '抉择正确，继续前进…';
+  } else {
+    const w = L.wrong.find((x) => x.letter === k);
+    $('#view-caption').textContent = '结局《' + w.ending + '》：' + w.text;
+    $('#view-hint').textContent = '这个选择，把队伍带向了另一条路…';
+  }
+  $('#screen-view').scrollTop = 0;
+  show('screen-view');
+
+  timer = setTimeout(() => { advance(k); }, correct ? VIEW_MS_CORRECT : VIEW_MS_WRONG);
+}
+
+function advance(k) {
+  clearTimeout(timer); timer = null;
+  const L = LEVELS[idx];
+  if (k === L.correct) next();
+  else failToStart(k);
+}
+
+function skip() {
+  if (!busy) return;
+  const k = $('#view-img').dataset.k;
+  advance(k);
+}
+
+function next() {
+  busy = false;
+  idx += 1;
+  if (idx >= LEVELS.length) { show('screen-win'); return; }
+  renderLevel();
+  show('screen-quiz');
+}
+
+function failToStart(k) {
+  const L = LEVELS[idx];
+  const w = L.wrong.find((x) => x.letter === k);
+  $('#fail-title').textContent = '第 ' + L.n + ' 关 · 结局《' + w.ending + '》';
+  show('screen-fail');
+  timer = setTimeout(() => { busy = false; show('screen-start'); }, FAIL_MS);
+}
+
+$('#btn-start').addEventListener('click', start);
+$('#btn-again').addEventListener('click', start);
+$('#btn-retry').addEventListener('click', () => { busy = false; show('screen-start'); });
+$('#screen-view').addEventListener('click', skip);
+$('#screen-fail').addEventListener('click', () => { busy = false; show('screen-start'); });
+
+// ---- 创作说明 ----
+function renderAbout() {
+  document.getElementById('about-title').textContent = ABOUT.title;
+  const body = document.getElementById('about-body');
+  body.innerHTML = '';
+  ABOUT.body.forEach((text) => {
+    const p = document.createElement('p');
+    p.textContent = text;
+    body.appendChild(p);
+  });
+  const h3 = document.createElement('h3');
+  h3.textContent = ABOUT.notesHeading;
+  body.appendChild(h3);
+  const ul = document.createElement('ul');
+  ABOUT.notes.forEach((text) => {
+    const li = document.createElement('li');
+    li.textContent = text;
+    ul.appendChild(li);
+  });
+  body.appendChild(ul);
+}
+
+$('#btn-about').addEventListener('click', () => {
+  renderAbout();
+  document.getElementById('about-body').scrollTop = 0;
+  show('screen-about');
+});
+$('#btn-about-back').addEventListener('click', () => show('screen-start'));
+
+$('#win-text').textContent = '1936年10月，红军三大主力在会宁、将台堡胜利会师，宣告长征胜利结束。每一代人有每一代人的长征路——今天，你用自己的选择，走完了这条精神长征路。';
+</script>
+</body>
+</html>
